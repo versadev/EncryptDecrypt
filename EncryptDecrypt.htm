@@ -1,0 +1,218 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Encrypt - Decrypt</title>
+
+    <style type="text/css">
+
+
+
+    </style>
+
+    <link href="css/bootstrap.css" rel="stylesheet" />
+
+    <script type="text/javascript" src="scripts/jquery-1.10.2.js"></script>
+
+    <script language="javascript" type="text/javascript">
+
+        // Ref: http://www.pro-technix.com/information/crypto/pages/vernam_base.html
+        // Ref: https://msdn.microsoft.com/library/ece515h6%28v=vs.94%29.aspx?f=255&MSPPError=-2147217396
+        
+        // Vernam Cipher Method
+
+        var key = "ghfyujyttrf67542wrgfy987vfhdde5646tuhkjo877edfdgfe65476jhgfvbcgfd";
+
+        function Encrypt() {
+            var sourceDoc = '';
+            sourceDoc = $('#decryptedDoc').val();
+            EncryptDecrypt(sourceDoc, 0, 1);
+        }
+
+        function Decrypt() {
+            var sourceDoc = '';
+            sourceDoc = $('#encryptedDoc').val();
+            EncryptDecrypt(sourceDoc, 4, 0);
+        }
+
+        function EncryptDecrypt(sourceString, shift, mode) {
+
+            var outString = '';
+            var i = 0;
+            var char = '';
+            var ascii_keyCode = 0;
+            var ascii_charCode = 0;
+            var ascii_outcharCode = 0;
+            var hexString = '';
+            var keyPos = -1;
+
+            if (mode == 1) {
+
+                for (i = 0; i <= sourceString.length - 1; i++) {
+
+                    if (keyPos >= key.length - 1) {
+                        keyPos = 0; // Reuse The Key
+                    } else {
+                        keyPos = keyPos + 1;
+                    }
+
+                    char = sourceString[i];
+                    ascii_charCode = sourceString.charCodeAt(i);
+                    ascii_keyCode = key.charCodeAt(keyPos);
+                    
+                    // Perform Bitwise XOR
+                    // Note: This Method Supports UniCode Characters And Therefore Requires 2 Bytes (0 - 65535 or 0000 - FFFF)
+
+                    ascii_outcharCode = (ascii_charCode ^ ascii_keyCode);
+                    //outString = outString + String.fromCharCode(ascii_outcharCode);
+
+                    // Convert Decimal To Hexadecimal
+                    hexString = ascii_outcharCode.toString(16);
+                    hexString = hexString.toUpperCase();
+
+                    // Pad To Four Characters - 2 Bytes
+                    while (hexString.length < 4) {
+                        hexString = "0" + hexString;
+                    }
+
+                    // Must save the encrypted document as ascii character codes as the output can contain non printable characters.
+                    outString = outString + hexString;
+                    //if (outString != '') {
+                    //    outString = outString + ',' + hexString;
+                    //} else {
+                    //    outString = outString + hexString;
+                    //}
+
+                }
+
+                $('#encryptedDoc').val(outString);
+
+            } else {
+
+                // The encrypted document should be a string of character codes represented as a hexadecimal number (2 bytes 0000 to FFFF).
+
+                var stringArray = [];
+
+                if (sourceString != '') {
+
+                    //stringArray = sourceString.split(",");
+
+                    // Split Every Four Characters
+                    var num = 4;
+                    
+                    for (var i = 0; i < sourceString.length; i += num) {
+                        stringArray.push(sourceString.substr(i, num));
+                    }
+
+                    // Process The Array
+                    for (i = 0; i <= stringArray.length - 1; i++) {
+
+                        if (keyPos >= key.length - 1) {
+                            keyPos = 0; // Reuse The Key
+                        } else {
+                            keyPos = keyPos + 1;
+                        }
+
+                        hexString = stringArray[i];
+
+                        // Convert Hexadecimal To Decimal
+                        ascii_charCode = parseInt(hexString, 16);                        
+                        ascii_keyCode = key.charCodeAt(keyPos);
+
+                        // Perform Bitwise XOR
+                        ascii_outcharCode = (ascii_charCode ^ ascii_keyCode);
+
+                        outString = outString + String.fromCharCode(ascii_outcharCode);
+                    }
+
+                }
+
+                $('#decryptedDoc').val(outString);
+            }
+
+            return outString;
+        }
+
+        $(document).ready(function () {
+
+            // Display The Key
+            $('#txtKey').val(key);
+
+        });
+
+    </script>
+
+</head>
+<body>
+
+    <div class="container body-content">
+
+        <h2>JavaScript Encrypt - Decrypt</h2>
+        <p>Developed by Warren Bullock</p>
+
+        <div class="form-horizontal">
+
+            <form id="form1" name="form1">
+
+                <div class="form-group">
+                    <div class="col-md-12">
+                        These functions can be used to encrypt an HTML document prior to postback and storage within a database.<br />
+                        The document can then be retrieved and decrypted by the client before display.<br />
+                        This way the key is never stored with the encrypted data and the decrypted document is never transmitted over a network.<br />
+                        The key would be entered by the user at the time of encryption / decryption.<br />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-12">
+                        Encryption Key
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-12">
+                        <input type="text" id="txtKey" class="form-control" value="" readonly="readonly" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-12">
+                        Text To Encrypt
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-12">
+                        <textarea id="decryptedDoc" class="form-control" style="height:200px;" placeholder="Enter text or markup to encrypt..."></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-12">
+                        <p>
+                            <button id="btnEncrypt" type="button" class="btn btn-default" onclick="Encrypt();">Encrypt</button>
+                            <button id="btnDecrypt" type="button" class="btn btn-default" onclick="Decrypt();">Decrypt</button>
+                        </p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-12">
+                        Encrypted Text
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-12">
+                        <textarea id="encryptedDoc" class="form-control" style="height:200px;background-color:#325269;color:#AAC0CD;"></textarea>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+
+        <hr />
+        <footer>
+            <p>&copy; 2015 - VersaDev Pty Ltd</p>
+        </footer>
+
+    </div>
+
+</body>
+</html>
